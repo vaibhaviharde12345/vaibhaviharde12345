@@ -1,0 +1,175 @@
+from tensorflow.keras.preprocessing.image import ImageDataGenerator, load_img
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D
+from tensorflow.keras.layers import Activation, Dropout, Flatten, Dense
+from tensorflow.keras import backend as K
+import tensorflow as tf
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
+import numpy as np
+from os import listdir
+from os.path import isfile, join
+img_width = 200
+img_height = 200
+
+train_data_dir = 'C:/Users/HP/Downloads/Benign_Malignant/Benign_Malignant/Data/Train'
+validation_data_dir = 'C:/Users/HP/Downloads/Benign_Malignant/Benign_Malignant/Data/Validation'
+train_samples = 200
+validation_samples = 200
+epochs = 50
+batch_size = 50
+
+# Check for TensorFlow or Thieno
+if K.image_data_format() == 'channels_first':
+    input_shape = (3, img_width, img_height)
+else:
+    input_shape = (img_width, img_height, 3)
+model = Sequential()
+# Conv2D : Two dimenstional convulational model.
+# 32 : Input for next layer
+# (3,3) convulonational windows size
+model.add(Conv2D(32, (3, 3), input_shape=input_shape))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+
+model.add(Conv2D(32, (3, 3)))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+
+model.add(Conv2D(64, (3, 3)))
+model.add(Activation('relu'))
+model.add(MaxPooling2D(pool_size=(2, 2)))
+
+model.add(Flatten()) # Output convert into one dimension layer and will go to Dense layer
+model.add(Dense(64))
+model.add(Activation('relu'))
+model.add(Dropout(0.5))
+model.add(Dense(1))
+model.add(Activation('sigmoid'))
+model.summary()
+def create_train_data():
+    training_data = []
+    for img in tqdm(os.listdir(TRAIN_DIR)):
+        label = label_img(img)
+        path = os.path.join(TRAIN_DIR, img)
+        img = cv2.resize(cv2.imread(path, cv2.IMREAD_GRAYSCALE),(IMG_SIZE,IMG_SIZE))
+        training_data.append([np.array(img), np.array(label)])
+    shuffle(traning_data)
+    np.save('train_data.npy', traning_data)
+    return training__data
+train_datagen = ImageDataGenerator(
+    rescale=1. / 255,
+    shear_range=0.2,
+    zoom_range=0.2,
+    horizontal_flip=True)
+import tensorflow.keras
+from tensorflow.keras import optimizers
+model.compile(loss='binary_crossentropy', 
+              optimizer=tensorflow.keras.optimizers.Adam(lr=.0001),
+              metrics=['accuracy'])
+train_generator = train_datagen.flow_from_directory(
+    train_data_dir,
+    target_size=(img_width, img_height),
+    batch_size=batch_size,
+    class_mode='binary')
+print(train_generator.class_indices)
+imgs, labels = next(train_generator)
+from skimage import io
+
+def imshow(image_RGB):
+  io.imshow(image_RGB)
+  io.show()
+import matplotlib.pyplot as plt
+%matplotlib inline
+image_batch,label_batch = train_generator.next()
+
+print(len(image_batch))
+for i in range(0,len(image_batch)):
+    image = image_batch[i]
+    print(label_batch[i])
+    imshow(image)
+validation_generator = train_datagen.flow_from_directory(
+    validation_data_dir,
+    target_size=(img_width, img_height),
+    batch_size=batch_size,
+    class_mode='binary')
+#In fit_generator(), you don't pass the x and y directly, instead they come from a generator.
+history = model.fit_generator(
+    train_generator,
+    steps_per_epoch=train_samples // batch_size,
+    epochs=epochs,
+    validation_data=validation_generator,
+    validation_steps=validation_samples // batch_size)
+import matplotlib.pyplot as plt
+%matplotlib inline
+
+# list all data in history
+print(history.history.keys())
+# summarize history for accuracy
+plt.plot(history.history['accuracy'])
+plt.plot(history.history['val_accuracy'])
+plt.title('model accuracy')
+plt.ylabel('accuracy')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
+# summarize history for loss
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('model loss')
+plt.ylabel('loss')
+plt.xlabel('epoch')
+plt.legend(['train', 'test'], loc='upper left')
+plt.show()
+from tensorflow.keras.models import load_model
+model.save('SKin_Cancer_cnn.h5')
+cnn = load_model('SKin_Cancer_cnn.h5')
+from tensorflow.keras.models import load_model
+
+
+
+model = load_model('SKin_Cancer_cnn.h5')
+predict_dir_path='C:/Users/pares/Desktop/23-07-22/archive/Data/Test'
+onlyfiles = [f for f in listdir(predict_dir_path) if isfile(join(predict_dir_path, f))]
+print(onlyfiles)
+# predicting images
+from tensorflow.keras.preprocessing import image
+Benign_Image = 0
+Malignant_Image  = 0
+
+actual  = [0,0,0,0,0,1,1,1]
+predicted  = []
+
+for file in onlyfiles:
+    img = image.load_img(predict_dir_path+'/'+file, target_size=(img_width, img_height))
+    x = image.img_to_array(img)
+    x = np.expand_dims(x, axis=0)
+    
+    images = np.vstack([x])
+    classes = model.predict(images, batch_size=10)
+    classes = classes[0][0]
+    
+    if classes == 0:
+        print(file + ": " + 'Benign')
+        Benign_Image += 1
+        predicted.append(0)
+    else:
+        print(file + ": " + 'Malignant')
+        Malignant_Image += 1
+        predicted.append(1)
+print("Total Benign Images :",Benign_Image)
+print("Total Malignant Images :",Malignant_Image)
+print("actual :",actual)
+print("predicted :",predicted)
+from sklearn.metrics import confusion_matrix
+matrix = confusion_matrix(actual,predicted, labels=[1,0])
+print('Confusion matrix : \n',matrix)
+TP, FP, FN, TN = confusion_matrix(actual,predicted,labels=[1,0]).reshape(-1)
+print('Outcome values : \n', TP, FP, FN, TN)
+import seaborn as sns
+plt.figure(figsize=(5,4))
+sns.heatmap(matrix, annot=True)
+plt.title('Confusion Matrix')
+plt.ylabel('Actual Values')
+plt.xlabel('Predicted Values')
+plt.show()
